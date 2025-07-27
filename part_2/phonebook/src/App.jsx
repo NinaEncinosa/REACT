@@ -14,8 +14,16 @@ const App = () => {
       name: newName,
     };
 
-    setPersons(persons.concat(personObject));
+    const nameExists = persons.some((person) => person.name === newName);
+
+    nameExists
+      ? showAlertNameAlreadyOnList(personObject.name)
+      : setPersons(persons.concat(personObject));
     setNewName("");
+  };
+
+  const showAlertNameAlreadyOnList = (newName) => {
+    alert(`${newName} is already added to phonebook`);
   };
 
   const handleNameChange = (event) => {
