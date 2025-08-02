@@ -49,7 +49,7 @@ const App = () => {
 
     nameExists(persons, newName)
       ? showAlertNameAlreadyOnList(newName)
-      : setPersons(persons.concat(personObject));
+      : persistPerson(personObject);
 
     setNewName("");
     setNewNumber("");
@@ -57,6 +57,12 @@ const App = () => {
 
   const showAlertNameAlreadyOnList = (name) => {
     alert(`${name} is already added to phonebook`);
+  };
+
+  const persistPerson = (newPerson) => {
+    axios.post("http://localhost:3001/persons", newPerson).then((response) => {
+      setPersons(persons.concat(response.data));
+    });
   };
 
   return (
