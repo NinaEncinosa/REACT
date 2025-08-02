@@ -63,6 +63,22 @@ const App = () => {
     });
   };
 
+  const deletePerson = (id, name) => {
+    const confirmDelete = window.confirm(`Delete ${name}?`);
+
+    if (confirmDelete) {
+      phonebookService
+        .remove(id)
+        .then(() => {
+          setPersons(persons.filter((person) => person.id !== id));
+        })
+        .catch((error) => {
+          alert(`${name} has already been removed`);
+          setPersons(persons.filter((person) => person.id !== id));
+        });
+    }
+  };
+
   return (
     <div>
       <h2>Phonebook</h2>
@@ -76,7 +92,10 @@ const App = () => {
         handleNumberChange={handleNumberChange}
       />
       <h2>Numbers</h2>
-      <Persons persons={getFilteredPersons(persons, filterName)} />
+      <Persons
+        persons={getFilteredPersons(persons, filterName)}
+        handleDelete={deletePerson}
+      />
     </div>
   );
 };
