@@ -15,12 +15,9 @@ const getFilteredPersons = (persons, filter) => {
   );
 };
 
-const Notification = ({ message }) => {
-  if (message === null) {
-    return null;
-  }
-
-  return <div className="success">{message}</div>;
+const Notification = ({ message, type }) => {
+  if (!message) return null;
+  return <div className={`notification ${type}`}>{message}</div>;
 };
 
 const nameExists = (persons, name) =>
@@ -31,37 +28,43 @@ const App = () => {
   const [newName, setNewName] = useState("");
   const [newNumber, setNewNumber] = useState("");
   const [filterName, setFilter] = useState("");
-  const [message, setMessage] = useState(null);
+  const [notification, setNotification] = useState({
+    message: null,
+    type: null,
+  });
 
   useEffect(() => {
     phonebookService.getAll().then((r) => setPersons(r));
   }, []);
 
-  const handleFilter = (event) => {
-    setFilter(event.target.value);
+  const showNotification = (message, type = "success") => {
+    setNotification({ message, type });
+    setTimeout(() => {
+      clearNotification();
+    }, 5000);
   };
 
-  const handleNameChange = (event) => {
-    setNewName(event.target.value);
+  const clearNotification = () => {
+    setNotification({ message: null, type: null });
   };
 
-  const handleNumberChange = (event) => {
-    setNewNumber(event.target.value);
-  };
+  const handleFilter = (e) => setFilter(e.target.value);
+  const handleNameChange = (e) => setNewName(e.target.value);
+  const handleNumberChange = (e) => setNewNumber(e.target.value);
 
   const addPerson = (event) => {
     event.preventDefault();
     const personObject = createPerson(newName, newNumber);
 
     nameExists(persons, newName)
-      ? showAlertChangeNumber(personObject)
-      : persistPerson(personObject);
+      ? handleUpdateNumber(personObject)
+      : handleAddPerson(personObject);
 
     setNewName("");
     setNewNumber("");
   };
 
-  const showAlertChangeNumber = (personObject) => {
+  const handleUpdateNumber = (personObject) => {
     const confirmUpdate = window.confirm(
       `${personObject.name} is already added to phonebook, replace the old number with a new one?`
     );
@@ -71,22 +74,18 @@ const App = () => {
 
       phonebookService.update(existingPerson.id, updatedPerson).then((resp) => {
         setPersons(persons.map((p) => (p.id !== existingPerson.id ? p : resp)));
+        showNotification(
+          `${personObject.name}'s number was updated successfully`
+        );
       });
-      setMessage(`${personObject.name}'s number was updated successfully`);
-      setTimeout(() => {
-        setMessage(null);
-      }, 5000);
     }
   };
 
-  const persistPerson = (newPerson) => {
-    phonebookService.create(newPerson).then((p) => {
-      setPersons(persons.concat(p));
+  const handleAddPerson = (newPerson) => {
+    phonebookService.create(newPerson).then((createdPerson) => {
+      setPersons(persons.concat(createdPerson));
+      showNotification(`Added ${createdPerson.name}`);
     });
-    setMessage(`Added ${newPerson.name}`);
-    setTimeout(() => {
-      setMessage(null);
-    }, 5000);
   };
 
   const deletePerson = (id, name) => {
@@ -97,13 +96,13 @@ const App = () => {
         .remove(id)
         .then(() => {
           setPersons(persons.filter((person) => person.id !== id));
-          setMessage(`Deleted ${name} successfully`);
-          setTimeout(() => {
-            setMessage(null);
-          }, 5000);
+          showNotification(`Deleted ${name} successfully`);
         })
         .catch((error) => {
-          alert(`${name} has already been removed`);
+          showNotification(
+            `Information of ${name} has already been removed from server`,
+            "error"
+          );
           setPersons(persons.filter((person) => person.id !== id));
         });
     }
@@ -112,7 +111,10 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
-      <Notification message={message}></Notification>
+      <Notification
+        message={notification.message}
+        type={notification.type}
+      ></Notification>
       <Filter value={filterName} onChange={handleFilter} />
       <h2>add a new</h2>
       <PersonForm
