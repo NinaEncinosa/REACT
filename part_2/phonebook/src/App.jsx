@@ -15,6 +15,14 @@ const getFilteredPersons = (persons, filter) => {
   );
 };
 
+const Notification = ({ message }) => {
+  if (message === null) {
+    return null;
+  }
+
+  return <div className="success">{message}</div>;
+};
+
 const nameExists = (persons, name) =>
   persons.some((person) => person.name.toLowerCase() === name.toLowerCase());
 
@@ -23,6 +31,7 @@ const App = () => {
   const [newName, setNewName] = useState("");
   const [newNumber, setNewNumber] = useState("");
   const [filterName, setFilter] = useState("");
+  const [message, setMessage] = useState(null);
 
   useEffect(() => {
     phonebookService.getAll().then((r) => setPersons(r));
@@ -63,6 +72,10 @@ const App = () => {
       phonebookService.update(existingPerson.id, updatedPerson).then((resp) => {
         setPersons(persons.map((p) => (p.id !== existingPerson.id ? p : resp)));
       });
+      setMessage(`${personObject.name}'s number was updated successfully`);
+      setTimeout(() => {
+        setMessage(null);
+      }, 5000);
     }
   };
 
@@ -70,6 +83,10 @@ const App = () => {
     phonebookService.create(newPerson).then((p) => {
       setPersons(persons.concat(p));
     });
+    setMessage(`Added ${newPerson.name}`);
+    setTimeout(() => {
+      setMessage(null);
+    }, 5000);
   };
 
   const deletePerson = (id, name) => {
@@ -80,6 +97,10 @@ const App = () => {
         .remove(id)
         .then(() => {
           setPersons(persons.filter((person) => person.id !== id));
+          setMessage(`Deleted ${name} successfully`);
+          setTimeout(() => {
+            setMessage(null);
+          }, 5000);
         })
         .catch((error) => {
           alert(`${name} has already been removed`);
@@ -91,6 +112,7 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={message}></Notification>
       <Filter value={filterName} onChange={handleFilter} />
       <h2>add a new</h2>
       <PersonForm
