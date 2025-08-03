@@ -15,9 +15,8 @@ const getFilteredPersons = (persons, filter) => {
   );
 };
 
-const nameExists = (persons, name) => {
-  return persons.some((person) => person.name === name);
-};
+const nameExists = (persons, name) =>
+  persons.some((person) => person.name.toLowerCase() === name.toLowerCase());
 
 const App = () => {
   const [persons, setPersons] = useState([]);
@@ -46,15 +45,25 @@ const App = () => {
     const personObject = createPerson(newName, newNumber);
 
     nameExists(persons, newName)
-      ? showAlertNameAlreadyOnList(newName)
+      ? showAlertChangeNumber(personObject)
       : persistPerson(personObject);
 
     setNewName("");
     setNewNumber("");
   };
 
-  const showAlertNameAlreadyOnList = (name) => {
-    alert(`${name} is already added to phonebook`);
+  const showAlertChangeNumber = (personObject) => {
+    const confirmUpdate = window.confirm(
+      `${personObject.name} is already added to phonebook, replace the old number with a new one?`
+    );
+    if (confirmUpdate) {
+      const existingPerson = persons.find((p) => p.name === personObject.name);
+      const updatedPerson = { ...existingPerson, number: personObject.number };
+
+      phonebookService.update(existingPerson.id, updatedPerson).then((resp) => {
+        setPersons(persons.map((p) => (p.id !== existingPerson.id ? p : resp)));
+      });
+    }
   };
 
   const persistPerson = (newPerson) => {
